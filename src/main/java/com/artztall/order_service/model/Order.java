@@ -4,6 +4,7 @@ import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -14,7 +15,7 @@ public class Order {
     private String id;
     private String userId;
     private List<OrderItem> items;
-    private double totalAmount;
+    private BigDecimal totalAmount;
     private OrderStatus status;
     private String shippingAddress;
     private LocalDateTime createdAt;
