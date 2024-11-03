@@ -1,8 +1,10 @@
-package com.artztall.orderservice.service;
+package com.artztall.order_service.service;
 
-import com.artztall.orderservice.dto.OrderCreateDTO;
-import com.artztall.orderservice.dto.OrderResponseDTO;
-import com.artztall.orderservice.model.OrderStatus;
+
+import com.artztall.order_service.dto.OrderCreateDTO;
+import com.artztall.order_service.dto.OrderResponseDTO;
+import com.artztall.order_service.model.OrderStatus;
+
 import java.util.List;
 
 public interface OrderService {
