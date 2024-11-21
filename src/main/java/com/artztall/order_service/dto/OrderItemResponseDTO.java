@@ -1,12 +1,12 @@
-package com.artztall.order_service.model;
+package com.artztall.order_service.dto;
 
+import com.artztall.order_service.model.ProductDimensions;
 import lombok.Data;
 
-import lombok.Data;
 import java.math.BigDecimal;
 
 @Data
-public class OrderItem {
+public class OrderItemResponseDTO {
     private String productId;
     private String productName;
     private String artistId;
