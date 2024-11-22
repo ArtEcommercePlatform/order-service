@@ -15,6 +15,7 @@ import java.math.BigDecimal;
 public class OrderServiceImpl implements OrderService {
     private final OrderRepository orderRepository;
     private final ProductClientService productClientService;
+    private final NotificationClientService notificationClientService;
 
     @Override
     public OrderResponseDTO createOrder(OrderCreateDTO orderCreateDTO) {
@@ -33,6 +34,13 @@ public class OrderServiceImpl implements OrderService {
         order.setUpdatedAt(LocalDateTime.now());
 
         Order savedOrder = orderRepository.save(order);
+        NotificationSendDTO notification = new NotificationSendDTO();
+        notification.setUserId(savedOrder.getUserId());
+        notification.setMessage("Your order #" + savedOrder.getId() + " has been successfully placed.");
+        notification.setType("INFO");
+        notification.setActionUrl("http://localhost:5173");
+        notificationClientService.sendNotification(notification);
+
         return mapToOrderResponse(savedOrder);
     }
 
@@ -56,7 +64,16 @@ public class OrderServiceImpl implements OrderService {
                 .orElseThrow(() -> new RuntimeException("Order not found"));
         order.setStatus(status);
         order.setUpdatedAt(LocalDateTime.now());
-        return mapToOrderResponse(orderRepository.save(order));
+        Order updatedOrder = orderRepository.save(order);
+
+        // Send order status update notification
+        NotificationSendDTO notification = new NotificationSendDTO();
+        notification.setUserId(updatedOrder.getUserId());
+        notification.setType("INFO");
+        notification.setMessage("Your order #" + updatedOrder.getId() + " status has been updated to " + status);
+        notificationClientService.sendNotification(notification);
+
+        return mapToOrderResponse(updatedOrder);
     }
 
     @Override
