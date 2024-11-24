@@ -3,8 +3,10 @@ package com.artztall.order_service.service;
 
 import com.artztall.order_service.dto.OrderCreateDTO;
 import com.artztall.order_service.dto.OrderResponseDTO;
+import com.artztall.order_service.model.Order;
 import com.artztall.order_service.model.OrderStatus;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface OrderService {
@@ -13,5 +15,7 @@ public interface OrderService {
     List<OrderResponseDTO> getUserOrders(String userId);
     OrderResponseDTO updateOrderStatus(String orderId, OrderStatus status);
     void deleteOrder(String orderId);
+
 }
+
 
