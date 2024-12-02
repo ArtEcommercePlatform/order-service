@@ -11,8 +11,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.math.BigDecimal;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -27,25 +27,22 @@ public class OrderServiceImpl implements OrderService {
     public OrderResponseDTO createOrder(OrderCreateDTO orderCreateDTO) {
         log.info("Creating order for user: {}", orderCreateDTO.getUserId());
 
-        // Validate all products exist and are available
-        validateProducts(orderCreateDTO.getItems());
+        // Validate the single product exists and is available
+        validateProduct(orderCreateDTO.getItem());
 
         try {
-            // Reserve all products
-            orderCreateDTO.getItems().forEach(item -> {
-                try {
-                    productClientService.reserveProduct(item.getProductId());
-                    log.info("Reserved product: {}", item.getProductId());
-                } catch (Exception e) {
-                    log.error("Failed to reserve product: {}", item.getProductId(), e);
-                    rollbackReservations(orderCreateDTO.getItems());
-                    throw new RuntimeException("Failed to reserve product: " + item.getProductId());
-                }
-            });
+            // Reserve the product
+            try {
+                productClientService.reserveProduct(orderCreateDTO.getItem().getProductId());
+                log.info("Reserved product: {}", orderCreateDTO.getItem().getProductId());
+            } catch (Exception e) {
+                log.error("Failed to reserve product: {}", orderCreateDTO.getItem().getProductId(), e);
+                throw new RuntimeException("Failed to reserve product: " + orderCreateDTO.getItem().getProductId());
+            }
 
             Order order = new Order();
             order.setUserId(orderCreateDTO.getUserId());
-            order.setItems(mapToOrderItems(orderCreateDTO));
+            order.setItem(mapToOrderItem(orderCreateDTO));
             order.setTotalAmount(calculateTotalAmount(order));
             order.setStatus(OrderStatus.PENDING);
             order.setPaymentStatus(PaymentStatus.PENDING);
@@ -99,9 +96,9 @@ public class OrderServiceImpl implements OrderService {
         order.setUpdatedAt(LocalDateTime.now());
         Order updatedOrder = orderRepository.save(order);
 
-        // If order is cancelled or expired, release the products
+        // If order is cancelled or expired, release the product
         if (status == OrderStatus.CANCELLED || status == OrderStatus.EXPIRED) {
-            releaseOrderProducts(order);
+            releaseOrderProduct(order);
         }
 
         // Send notification
@@ -122,8 +119,8 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
 
-        // Release products before deleting
-        releaseOrderProducts(order);
+        // Release product before deleting
+        releaseOrderProduct(order);
         orderRepository.deleteById(orderId);
         log.info("Order deleted successfully: {}", orderId);
     }
@@ -141,7 +138,7 @@ public class OrderServiceImpl implements OrderService {
 
         for (Order order : abandonedOrders) {
             try {
-                releaseOrderProducts(order);
+                releaseOrderProduct(order);
                 order.setStatus(OrderStatus.EXPIRED);
                 orderRepository.save(order);
 
@@ -160,60 +157,38 @@ public class OrderServiceImpl implements OrderService {
         }
     }
 
-    private void validateProducts(List<OrderItemDTO> items) {
-        items.forEach(item -> {
-            ProductResponseDTO product = productClientService.getProduct(item.getProductId());
-            if (product == null) {
-                throw new RuntimeException("Product not found: " + item.getProductId());
-            }
-            if (!product.isAvailable()) {
-                throw new RuntimeException("Product is not available: " + item.getProductId());
-            }
-            if (product.getStockQuantity() < item.getQuantity()) {
-                throw new RuntimeException("Insufficient stock for product: " + item.getProductId());
-            }
-        });
+    private void validateProduct(OrderItemDTO item) {
+        ProductResponseDTO product = productClientService.getProduct(item.getProductId());
+        if (product == null) {
+            throw new RuntimeException("Product not found: " + item.getProductId());
+        }
+        if (!product.isAvailable()) {
+            throw new RuntimeException("Product is not available: " + item.getProductId());
+        }
+        if (product.getStockQuantity() < item.getQuantity()) {
+            throw new RuntimeException("Insufficient stock for product: " + item.getProductId());
+        }
     }
 
-    private void rollbackReservations(List<OrderItemDTO> items) {
-        items.forEach(item -> {
-            try {
-                productClientService.releaseProduct(item.getProductId());
-                log.info("Released product during rollback: {}", item.getProductId());
-            } catch (Exception e) {
-                log.error("Failed to release product during rollback: {}", item.getProductId(), e);
-            }
-        });
+    private void releaseOrderProduct(Order order) {
+        try {
+            productClientService.releaseProduct(order.getItem().getProductId());
+            log.info("Released product: {}", order.getItem().getProductId());
+        } catch (Exception e) {
+            log.error("Failed to release product: {}", order.getItem().getProductId(), e);
+        }
     }
 
-    private void releaseOrderProducts(Order order) {
-        order.getItems().forEach(item -> {
-            try {
-                productClientService.releaseProduct(item.getProductId());
-                log.info("Released product: {}", item.getProductId());
-            } catch (Exception e) {
-                log.error("Failed to release product: {}", item.getProductId(), e);
-            }
-        });
-    }
-
-    // Existing helper methods remain the same
-    private List<OrderItem> mapToOrderItems(OrderCreateDTO orderCreateDTO) {
-        return orderCreateDTO.getItems().stream()
-                .map(this::mapToOrderItem)
-                .collect(Collectors.toList());
-    }
-
-    private OrderItem mapToOrderItem(OrderItemDTO itemDTO) {
+    private OrderItem mapToOrderItem(OrderCreateDTO orderCreateDTO) {
         OrderItem orderItem = new OrderItem();
-        ProductResponseDTO product = productClientService.getProduct(itemDTO.getProductId());
+        ProductResponseDTO product = productClientService.getProduct(orderCreateDTO.getItem().getProductId());
 
-        orderItem.setProductId(itemDTO.getProductId());
+        orderItem.setProductId(orderCreateDTO.getItem().getProductId());
         orderItem.setProductName(product.getName());
         orderItem.setArtistId(product.getArtistId());
-        orderItem.setQuantity(itemDTO.getQuantity());
+        orderItem.setQuantity(orderCreateDTO.getItem().getQuantity());
         orderItem.setPrice(product.getPrice());
-        orderItem.setSubtotal(product.getPrice().multiply(BigDecimal.valueOf(itemDTO.getQuantity())));
+        orderItem.setSubtotal(product.getPrice().multiply(BigDecimal.valueOf(orderCreateDTO.getItem().getQuantity())));
         orderItem.setImageUrl(product.getImageUrl());
         orderItem.setDimensions(mapProductDimensions(product.getDimensions()));
         orderItem.setMedium(product.getMedium());
@@ -233,16 +208,14 @@ public class OrderServiceImpl implements OrderService {
     }
 
     private BigDecimal calculateTotalAmount(Order order) {
-        return order.getItems().stream()
-                .map(OrderItem::getSubtotal)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        return order.getItem().getSubtotal();
     }
 
     private OrderResponseDTO mapToOrderResponse(Order order) {
         OrderResponseDTO responseDTO = new OrderResponseDTO();
         responseDTO.setId(order.getId());
         responseDTO.setUserId(order.getUserId());
-        responseDTO.setItems(mapToOrderItemResponses(order.getItems()));
+        responseDTO.setItem(mapToOrderItemResponse(order.getItem()));
         responseDTO.setTotalAmount(order.getTotalAmount());
         responseDTO.setStatus(order.getStatus());
         responseDTO.setPaymentStatus(order.getPaymentStatus());
@@ -251,12 +224,6 @@ public class OrderServiceImpl implements OrderService {
         responseDTO.setCreatedAt(order.getCreatedAt());
         responseDTO.setUpdatedAt(order.getUpdatedAt());
         return responseDTO;
-    }
-
-    private List<OrderItemResponseDTO> mapToOrderItemResponses(List<OrderItem> items) {
-        return items.stream()
-                .map(this::mapToOrderItemResponse)
-                .collect(Collectors.toList());
     }
 
     private OrderItemResponseDTO mapToOrderItemResponse(OrderItem item) {

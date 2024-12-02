@@ -9,7 +9,7 @@ import java.util.List;
 public class Order {
     private String id;
     private String userId;
-    private List<OrderItem> items;
+    private OrderItem item;
     private BigDecimal totalAmount;
     private OrderStatus status;
     private PaymentStatus paymentStatus;

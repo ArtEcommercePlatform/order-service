@@ -7,7 +7,7 @@ import java.util.List;
 @Data
 public class OrderCreateDTO {
     private String userId;
-    private List<OrderItemDTO> items;
+    private OrderItemDTO item;
     private String shippingAddress;
     private String specialInstructions;
 }
