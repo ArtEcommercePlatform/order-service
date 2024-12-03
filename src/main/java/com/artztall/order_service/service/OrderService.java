@@ -12,4 +12,5 @@ public interface OrderService {
     List<OrderResponseDTO> getUserOrders(String userId);
     OrderResponseDTO updateOrderStatus(String orderId, OrderStatus status);
     void deleteOrder(String orderId);
+    List<OrderResponseDTO> getOrdersByArtisan(String artisanId);
 }

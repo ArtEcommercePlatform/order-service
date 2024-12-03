@@ -94,6 +94,11 @@ public class OrderServiceImpl implements OrderService {
 
         order.setStatus(status);
         order.setUpdatedAt(LocalDateTime.now());
+        if(status == OrderStatus.CONFIRMED){
+            order.setPaymentStatus(PaymentStatus.COMPLETED);
+        }else if(status == OrderStatus.EXPIRED){
+            order.setPaymentStatus(PaymentStatus.FAILED);
+        }
         Order updatedOrder = orderRepository.save(order);
 
         // If order is cancelled or expired, release the product
@@ -123,6 +128,15 @@ public class OrderServiceImpl implements OrderService {
         releaseOrderProduct(order);
         orderRepository.deleteById(orderId);
         log.info("Order deleted successfully: {}", orderId);
+    }
+
+    @Override
+    public List<OrderResponseDTO> getOrdersByArtisan(String artisanId) {
+        log.info("Fetching orders for artisan: {}", artisanId);
+
+        return orderRepository.findByItem_ArtistId(artisanId).stream()
+                .map(this::mapToOrderResponse)
+                .collect(Collectors.toList());
     }
 
     @Scheduled(fixedRate = 60000)

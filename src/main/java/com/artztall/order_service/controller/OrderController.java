@@ -189,4 +189,33 @@ public class OrderController {
         orderService.deleteOrder(orderId);
         return ResponseEntity.noContent().build();
     }
+
+
+    @Operation(
+            summary = "Get an order by artisan id",
+            description = "get a specific artisan's orders"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Artisan's Orders",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Orders not found",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "Internal server error",
+                    content = @Content
+            )
+    })
+    @GetMapping("/artisan/{artisanId}")
+    public ResponseEntity<List<OrderResponseDTO>> getOrdersByArtisan(@PathVariable String artisanId) {
+        List<OrderResponseDTO> artisanOrders = orderService.getOrdersByArtisan(artisanId);
+        return ResponseEntity.ok(artisanOrders);
+    }
+
 }
