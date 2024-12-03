@@ -132,12 +132,14 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public List<OrderResponseDTO> getOrdersByArtisan(String artisanId) {
-        log.info("Fetching orders for artisan: {}", artisanId);
+        log.info("Fetching confirmed orders for artisan: {}", artisanId);
 
         return orderRepository.findByItem_ArtistId(artisanId).stream()
+                .filter(order -> PaymentStatus.COMPLETED.equals(order.getPaymentStatus())) // Filter by paymentStatus
                 .map(this::mapToOrderResponse)
                 .collect(Collectors.toList());
     }
+
 
     @Scheduled(fixedRate = 60000)
     @Transactional
