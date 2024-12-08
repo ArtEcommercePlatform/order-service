@@ -186,7 +186,7 @@ public class OrderServiceImpl implements OrderService {
         }
     }
 
-    private void releaseOrderProduct(Order order) {
+    public void releaseOrderProduct(Order order) {
         try {
             productClientService.releaseProduct(order.getItem().getProductId());
             log.info("Released product: {}", order.getItem().getProductId());
@@ -195,7 +195,7 @@ public class OrderServiceImpl implements OrderService {
         }
     }
 
-    private OrderItem mapToOrderItem(OrderCreateDTO orderCreateDTO) {
+    public OrderItem mapToOrderItem(OrderCreateDTO orderCreateDTO) {
         OrderItem orderItem = new OrderItem();
         ProductResponseDTO product = productClientService.getProduct(orderCreateDTO.getItem().getProductId());
 
@@ -213,7 +213,7 @@ public class OrderServiceImpl implements OrderService {
         return orderItem;
     }
 
-    private ProductDimensions mapProductDimensions(ProductDimensionsDTO dimensionsDTO) {
+    public ProductDimensions mapProductDimensions(ProductDimensionsDTO dimensionsDTO) {
         if (dimensionsDTO == null) return null;
 
         ProductDimensions dimensions = new ProductDimensions();
@@ -223,11 +223,11 @@ public class OrderServiceImpl implements OrderService {
         return dimensions;
     }
 
-    private BigDecimal calculateTotalAmount(Order order) {
+    public BigDecimal calculateTotalAmount(Order order) {
         return order.getItem().getSubtotal();
     }
 
-    private OrderResponseDTO mapToOrderResponse(Order order) {
+    public OrderResponseDTO mapToOrderResponse(Order order) {
         OrderResponseDTO responseDTO = new OrderResponseDTO();
         responseDTO.setId(order.getId());
         responseDTO.setUserId(order.getUserId());
@@ -242,7 +242,7 @@ public class OrderServiceImpl implements OrderService {
         return responseDTO;
     }
 
-    private OrderItemResponseDTO mapToOrderItemResponse(OrderItem item) {
+    public OrderItemResponseDTO mapToOrderItemResponse(OrderItem item) {
         OrderItemResponseDTO itemDTO = new OrderItemResponseDTO();
         itemDTO.setProductId(item.getProductId());
         itemDTO.setProductName(item.getProductName());
