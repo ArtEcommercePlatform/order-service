@@ -16,6 +16,7 @@ public class NotificationClientService {
                 .bodyValue(notificationSendDTO)
                 .retrieve()
                 .bodyToMono(NotificationSendDTO.class)
-                .block();
+                // Consider adding error handling
+                .onErrorMap(ex -> new RuntimeException("Failed to send notification", ex));
     }
 }
