@@ -15,14 +15,14 @@ public class WebClientConfig {
     @Bean
     public WebClient productServiceWebClient(WebClient.Builder webClientBuilder) {
         return webClientBuilder
-                .baseUrl("http://13.200.53.211:8082")
+                .baseUrl("http://localhost:8082")
                 .build();
     }
 
     @Bean
     public WebClient notificationServiceWebClient(WebClient.Builder webClientBuilder) {
         return webClientBuilder
-                .baseUrl("http://13.200.53.211:33001")
+                .baseUrl("http://localhost:8085")
                 .build();
     }
 }
